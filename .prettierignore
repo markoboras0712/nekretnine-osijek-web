@@ -1,0 +1,5 @@
+pnpm-lock.yaml
+.next/
+out/
+public/podaci.json
+CLAUDE.md
