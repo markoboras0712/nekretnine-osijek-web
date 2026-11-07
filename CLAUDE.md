@@ -197,16 +197,23 @@ marks where the user has none (never overwrites).
    untouched and keeps serving the old site until cutover.
 2. Backend `objava.py` (in `~/Documents/nekretnine-osijek/nekretnine/objava.py`) changes from "copy `web/`
    + force-push `gh-pages`" to "force-push **only `podaci.json`** to branch **`podaci`**" (single commit, same
-   token, same masking of the token in errors). Config key `javno.grana` → `podaci`. Install with
+   token, same masking of the token in errors), then send a `repository_dispatch` with `event_type: podaci`
+   (`POST /repos/markoboras0712/nekretnine-osijek-web/dispatches`, same token; needs Contents: write).
+   Config key `javno.grana` → `podaci`. Install with
    `cd ~/Documents/nekretnine-osijek && ./instaliraj.sh`. Keep `./nek test` green (24 tests; `test_javni_izvoz`
    must not push).
-3. GitHub Actions workflow `.github/workflows/deploy.yml` on `main`: triggers `push` to `main`, `push` to
-   `podaci`, `workflow_dispatch`; steps: checkout `main` → `git fetch origin podaci && git show
+3. GitHub Actions workflow `.github/workflows/deploy.yml` on `main`: triggers `push` to `main`,
+   `repository_dispatch` (`podaci`), `workflow_dispatch`. A `push` to `podaci` cannot trigger it: GitHub
+   reads workflows from the pushed commit, and `podaci` holds only `podaci.json`. `repository_dispatch`
+   runs from the default branch, so the default branch must be `main`. Steps: checkout `main` → `git fetch origin podaci && git show
    origin/podaci:podaci.json > public/podaci.json` → pnpm install (frozen) → format:check, typecheck, lint,
    test → `next build` (export to `out/`) → `actions/upload-pages-artifact` → `actions/deploy-pages`.
    Permissions `pages: write, id-token: write, contents: read`; concurrency group `pages`.
-   (Pushes made with Marko's fine-grained PAT do trigger workflows.) Also a CI workflow like zoetrope's.
-4. Cutover: repo Settings → Pages → Source = **GitHub Actions**; deploy objava change; check the site,
+   Also a CI workflow like zoetrope's.
+4. Cutover: the `podaci` branch must exist before the first deploy (seed it with the current
+   `podaci.json`). Repo Settings → default branch = **`main`**; Settings → Environments → `github-pages`
+   → allow `main` in its deployment branches (it only allows `gh-pages` from the legacy setup);
+   Settings → Pages → Source = **GitHub Actions**; deploy objava change; check the site,
    `#n=<id>` links, and that hourly data pushes redeploy. Then the `gh-pages` branch can be deleted.
 5. Local dev: copy the current `podaci.json` into `public/` (gitignored) and `pnpm dev`.
 
