@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { SADA, nek } from '@/lib/__fixtures__/nekretnina'
-import { danaDoRoka, ics, presavij, rokTekst } from '@/lib/deadlines'
+import { danaDoRoka, ics, presavij, rokTekst, rokUskoro } from '@/lib/deadlines'
 
 describe('deadlines', () => {
   it('counts calendar days and treats a bare date as end of day', () => {
@@ -15,6 +15,13 @@ describe('deadlines', () => {
       'rok za 5 dana (12. 11. u 10:00) · jamčevina 5.000 €',
     )
     expect(rokTekst(nek({ rok: '2026-11-08 00:00' }), SADA)).toBe('rok sutra (8. 11.)')
+    expect(rokTekst(nek({ rok: '2026-11-28' }), SADA)).toBe('rok za 21 dan (28. 11.)')
+  })
+
+  it('flags deadlines within 7 days on active listings only', () => {
+    expect(rokUskoro(nek({ rok: '2026-11-12' }), SADA)).toBe(true)
+    expect(rokUskoro(nek({ rok: '2026-11-20' }), SADA)).toBe(false)
+    expect(rokUskoro(nek({ rok: '2026-11-12', aktivan: false }), SADA)).toBe(false)
   })
 
   it('folds long lines (RFC 5545)', () => {

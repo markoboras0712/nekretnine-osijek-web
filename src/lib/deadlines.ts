@@ -1,7 +1,7 @@
 /** Auction and tender deadlines, and their .ics export. */
 
 import { VRSTE } from '@/lib/constants'
-import { eur, mjestoPrikaz } from '@/lib/format'
+import { dana, eur, mjestoPrikaz } from '@/lib/format'
 import type { Nekretnina } from '@/types/podaci'
 
 type ZaRok = Pick<Nekretnina, 'rok'>
@@ -30,12 +30,12 @@ export function danaDoRoka(n: ZaRok, now: number): number | null {
   return Math.round((dan.getTime() - danas.getTime()) / 86_400_000)
 }
 
-/** "rok za 5 dana (12. 11. u 10:00) · jamčevina 5.000 €", or '' without a future deadline. */
+/** "rok za 5 dana (12. 11. u 10:00) · jamčevina 5.000 €" ("rok za 21 dan"), or '' without a future deadline. */
 export function rokTekst(n: Pick<Nekretnina, 'rok' | 'jamcevina'>, now: number): string {
   const d = danaDoRoka(n, now)
   const r = rokDatum(n)
   if (d == null || d < 0 || !r) return ''
-  const kad = d === 0 ? 'rok danas' : d === 1 ? 'rok sutra' : `rok za ${d} dana`
+  const kad = d === 0 ? 'rok danas' : d === 1 ? 'rok sutra' : `rok za ${d} ${dana(d)}`
   const datum =
     `${r.getDate()}. ${r.getMonth() + 1}.` + (imaSat(n.rok) ? ` u ${n.rok.slice(11, 16)}` : '')
   return `${kad} (${datum})` + (n.jamcevina ? ` · jamčevina ${eur(n.jamcevina)}` : '')
@@ -45,7 +45,7 @@ export function poRoku(a: ZaRok, b: ZaRok): number {
   return (rokDatum(a)?.getTime() || 0) - (rokDatum(b)?.getTime() || 0)
 }
 
-/** Active, not rejected, deadline within the next 7 days. */
+/** Active with a deadline within the next 7 days. Rejected listings are the caller's to drop. */
 export function rokUskoro(n: Pick<Nekretnina, 'rok' | 'aktivan'>, now: number): boolean {
   const d = danaDoRoka(n, now)
   return n.aktivan && d != null && d >= 0 && d <= 7
@@ -69,8 +69,9 @@ function dt(d: Date): string {
 }
 
 /**
- * RFC 5545 line folding: lines over 75 octets continue on the next line after a space. Folding at
- * 60 characters keeps every line under 75 bytes even with two-byte Croatian letters.
+ * RFC 5545 line folding: lines over 75 octets continue on the next line after a space. Folds every
+ * 60 characters, as the old site did; that stays under 75 bytes unless more than about a quarter of
+ * a line is non-ASCII, which Croatian text never reaches in practice.
  */
 export function presavij(red: string): string {
   const dijelovi: string[] = []

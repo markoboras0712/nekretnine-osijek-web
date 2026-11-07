@@ -13,6 +13,7 @@ describe('marks', () => {
     expect(kodOznaka(o)).toBe('f.12.34~x.56')
     expect(dekodOznaka('f.12.34~x.56')).toEqual(o)
     expect(dekodOznaka('f.<script>~q.1')).toEqual({})
+    expect(dekodOznaka('constructor.12~__proto__.13~toString.14')).toEqual({})
   })
 
   it('never overwrites my marks on import', () => {
