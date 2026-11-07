@@ -23,5 +23,7 @@ describe('marks', () => {
     expect(plan).toEqual({ poznate: ['1', '2', '3'], nove: ['1', '3'], razlicite: ['2'] })
     expect(sazetakUvoza(tude, plan.nove)).toBe('favorit 1, odbačeno 1')
     expect(uvezi(moje, tude, plan.nove)).toEqual({ 1: 'favorit', 2: 'kontaktirano', 3: 'odbaceno' })
+    // marked by me after the banner appeared: stays mine
+    expect(uvezi({ ...moje, 1: 'odbaceno' }, tude, plan.nove)[1]).toBe('odbaceno')
   })
 })
