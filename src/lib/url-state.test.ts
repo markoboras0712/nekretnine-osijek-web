@@ -67,6 +67,17 @@ describe('url state', () => {
     expect(r.stanje).toMatchObject({ trazi: '', sort: 'cijena', smjer: 1 })
   })
 
+  it('waits for a usable query before sorting by relevance', () => {
+    const jeUpit = (q: string) => q.trim().length >= 2
+    const a = postaviTrazi({ ...prazno(), sort: 'm2' }, null, 'r', jeUpit)
+    expect(a.stanje).toMatchObject({ trazi: 'r', sort: 'm2' })
+    const b = postaviTrazi(a.stanje, a.sortPrijeTrazenja, 're', jeUpit)
+    expect(b.stanje.sort).toBe('relevantno')
+    expect(b.sortPrijeTrazenja).toEqual(['m2', 0])
+    const c = postaviTrazi(b.stanje, b.sortPrijeTrazenja, 'r', jeUpit)
+    expect(c.stanje).toMatchObject({ trazi: 'r', sort: 'm2' })
+  })
+
   it('switches to relevance on the first keystroke only', () => {
     const a = postaviTrazi({ ...prazno(), sort: 'm2' }, null, 'l')
     expect(a.stanje.sort).toBe('relevantno')

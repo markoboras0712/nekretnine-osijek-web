@@ -112,22 +112,24 @@ export function bezPogleda(q: string): string {
 
 /**
  * Sets the search text. Starting a search switches to "Najrelevantnije" and remembers the
- * previous sort; clearing it restores that sort.
+ * previous sort; clearing it restores that sort. `jeUpit` tells whether a query has anything to
+ * search for (one letter alone does not), so "Najrelevantnije" is never shown without results.
  */
 export function postaviTrazi(
   st: Stanje,
   prije: SortPar | null,
   trazi: string,
+  jeUpit: (q: string) => boolean = (q) => !!q.trim(),
 ): { stanje: Stanje; sortPrijeTrazenja: SortPar | null } {
   const t = trazi.trim()
-  // Only the first keystroke switches the sort, so a sort picked while searching sticks.
-  if (t && !st.trazi && st.sort !== 'relevantno') {
+  if (!jeUpit(t)) return vratiSort({ ...st, trazi: t }, prije)
+  // Only the start of a search switches the sort, so a sort picked while searching sticks.
+  if (!jeUpit(st.trazi) && st.sort !== 'relevantno') {
     return {
       stanje: { ...st, trazi: t, sort: 'relevantno', smjer: 0 },
       sortPrijeTrazenja: [st.sort, st.smjer],
     }
   }
-  if (!t) return vratiSort({ ...st, trazi: '' }, prije)
   return { stanje: { ...st, trazi: t }, sortPrijeTrazenja: prije }
 }
 

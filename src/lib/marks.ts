@@ -75,11 +75,12 @@ export function sazetakUvoza(tude: Oznake, nove: readonly string[]): string {
   return [...po].map(([o, b]) => `${OZNAKE[o].toLowerCase()} ${b}`).join(', ')
 }
 
+/** Adds the shared marks for `nove`, skipping any id I marked meanwhile (mine always win). */
 export function uvezi(moje: Oznake, tude: Oznake, nove: readonly string[]): Oznake {
   const van = { ...moje }
   for (const id of nove) {
     const o = tude[id]
-    if (o) van[id] = o
+    if (o && !van[id]) van[id] = o
   }
   return van
 }

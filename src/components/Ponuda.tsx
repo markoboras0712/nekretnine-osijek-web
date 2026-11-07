@@ -3,6 +3,7 @@
 import { ArrowDownIcon, ArrowUpIcon, SlidersHorizontalIcon, XIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { Cip } from '@/components/Cip'
 import { Detalj } from '@/components/Detalj'
 import { Filteri } from '@/components/Filteri'
@@ -69,7 +70,10 @@ function Banner({ children, uloga = 'status' }: { children: React.ReactNode; ulo
 
 async function podijeliOznake(x: PonudaStanje) {
   const kod = kodOznaka(x.oznake)
-  if (!kod) return
+  if (!kod) {
+    toast.info('Još nemaš oznaka')
+    return
+  }
   const broj = Object.keys(x.oznake).length
   await podijeli(
     'Nekretnine: moje oznake',

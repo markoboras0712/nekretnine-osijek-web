@@ -304,7 +304,7 @@ export function Filteri({ x }: { x: Ponuda }) {
                 key={k}
                 pritisnut={w < 0}
                 onClick={() => akcije.postaviZelju(k, w < 0 ? 0 : -1)}
-                className="aria-pressed:border-bad aria-pressed:bg-bad aria-pressed:text-background"
+                className="aria-pressed:border-bad aria-pressed:bg-bad-soft aria-pressed:text-bad aria-pressed:line-through"
               >
                 {t}
               </Cip>

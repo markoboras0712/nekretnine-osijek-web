@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { useStored } from '@/hooks/use-stored'
 import { naPonudu } from '@/lib/browser'
@@ -91,6 +91,13 @@ function citajHash(h: string) {
   }
 }
 
+/** "Najrelevantnije" only with a query the search can use ("a" alone is ignored). */
+function normaliziraj(n: IzUrla, viseRijeci: readonly string[]): IzUrla {
+  return n.stanje.sort === 'relevantno' && !rastavi(n.stanje.trazi, viseRijeci).length
+    ? vratiSort(n.stanje, n.sortPrijeTrazenja)
+    : n
+}
+
 function makniHash() {
   history.replaceState(null, '', location.pathname + location.search)
 }
@@ -132,9 +139,12 @@ export function usePonuda(p: Pripremljeno) {
 
   // ---------- filters (URL query) ----------
   const [url, setUrl] = useState<IzUrla>(() =>
-    izQuery(location.search, { spremljen: citajSpremljenSort(citaj(KLJUC.sort, null)) }),
+    normaliziraj(
+      izQuery(location.search, { spremljen: citajSpremljenSort(citaj(KLJUC.sort, null)) }),
+      p.viseRijeci,
+    ),
   )
-  const { stanje, sortPrijeTrazenja } = url
+  const { stanje } = url
   const [prikazano, setPrikazano] = useState(PO_STRANICI)
 
   useEffect(() => {
@@ -145,16 +155,15 @@ export function usePonuda(p: Pripremljeno) {
     }
   }, [stanje])
 
-  const postavi = useCallback((fn: (u: IzUrla) => IzUrla) => {
-    setUrl((u) => {
-      const n = fn(u)
-      // Without search text there is nothing to be relevant to.
-      return !n.stanje.trazi && n.stanje.sort === 'relevantno'
-        ? vratiSort(n.stanje, n.sortPrijeTrazenja)
-        : n
-    })
-    setPrikazano(PO_STRANICI)
-  }, [])
+  const jeUpit = useCallback((q: string) => rastavi(q, p.viseRijeci).length > 0, [p])
+
+  const postavi = useCallback(
+    (fn: (u: IzUrla) => IzUrla) => {
+      setUrl((u) => normaliziraj(fn(u), p.viseRijeci))
+      setPrikazano(PO_STRANICI)
+    },
+    [p],
+  )
 
   const promijeni = useCallback(
     (fn: (s: Stanje) => Stanje) => postavi((u) => ({ ...u, stanje: fn(u.stanje) })),
@@ -185,7 +194,7 @@ export function usePonuda(p: Pripremljeno) {
         return
       }
       if (r.usporedi) {
-        const ids = r.usporedi
+        const ids = r.usporedi.filter((id) => p.poId.has(id))
         setUsporedba((u) => (u.join() === ids.join() ? u : ids))
       }
       if (r.detalj && p.poId.has(r.detalj)) {
@@ -219,14 +228,13 @@ export function usePonuda(p: Pripremljeno) {
   }, [])
 
   // ---------- derived ----------
-  const upiti = useMemo(() => rastavi(stanje.trazi, p.viseRijeci), [stanje.trazi, p])
+  // Controls follow `stanje` at once; the list follows `ds`, which React may render a moment later
+  // so typing stays responsive on slow phones.
+  const ds = useDeferredValue(stanje)
+  const upiti = useMemo(() => rastavi(ds.trazi, p.viseRijeci), [ds.trazi, p])
   const rezultat = useMemo(() => pretrazi(p.nekretnine, upiti), [p, upiti])
 
-  // "Najrelevantnije" needs a usable query ("a" alone is ignored): until then show the old sort.
-  const [sort, smjer]: [SortKey, number] =
-    stanje.sort === 'relevantno' && !rezultat
-      ? (sortPrijeTrazenja ?? ['ocjena', 0])
-      : [stanje.sort, stanje.smjer]
+  const { sort, smjer } = ds
 
   const moja = useMemo(() => {
     const ocjene = new Map(
@@ -235,7 +243,7 @@ export function usePonuda(p: Pripremljeno) {
     return (n: Nekretnina): MojaOcjena => ocjene.get(n.id) ?? { ocjena: 0, zasto: [] }
   }, [p, zelje, now])
 
-  const ctx: Kontekst = useMemo(() => ({ stanje, rezultat, now }), [stanje, rezultat, now])
+  const ctx: Kontekst = useMemo(() => ({ stanje: ds, rezultat, now }), [ds, rezultat, now])
   const sortCtx: SortKontekst = useMemo(() => ({ rezultat, moja, now }), [rezultat, moja, now])
   const moje = useMemo(() => ({ oznake, vidjeno }), [oznake, vidjeno])
 
@@ -250,9 +258,9 @@ export function usePonuda(p: Pripremljeno) {
   const lista: Nek[] = useMemo(
     () =>
       osnovne
-        .filter((n) => uPogledu(n, stanje.pogled, moje, now))
-        .sort(stanje.pogled === 'rokovi' ? poRoku : usporedba(sort, smjer, sortCtx)),
-    [osnovne, stanje.pogled, moje, now, sort, smjer, sortCtx],
+        .filter((n) => uPogledu(n, ds.pogled, moje, now))
+        .sort(ds.pogled === 'rokovi' ? poRoku : usporedba(sort, smjer, sortCtx)),
+    [osnovne, ds.pogled, moje, now, sort, smjer, sortCtx],
   )
   const cipovi = useMemo(() => brojeviCipova(p.nekretnine, ctx, moje), [p, ctx, moje])
   const aktivni = useMemo(() => aktivniFilteri(stanje, p.znacajke), [stanje, p])
@@ -271,7 +279,7 @@ export function usePonuda(p: Pripremljeno) {
         naPonudu()
       },
       postaviTrazi(t: string) {
-        postavi((u) => postaviTrazi(u.stanje, u.sortPrijeTrazenja, t))
+        postavi((u) => postaviTrazi(u.stanje, u.sortPrijeTrazenja, t, jeUpit))
       },
       odaberiPrijedlog(pr: Prijedlog, trazi: string) {
         postavi((u) => primijeniOdabir(u.stanje, u.sortPrijeTrazenja, pr, trazi))
@@ -348,10 +356,13 @@ export function usePonuda(p: Pripremljeno) {
         history.replaceState(null, '', location.pathname + (q ? '?' + q : ''))
         setHash('')
         setUrl(
-          izQuery(q, {
-            pogled: stanje.pogled,
-            spremljen: citajSpremljenSort(citaj(KLJUC.sort, null)),
-          }),
+          normaliziraj(
+            izQuery(q, {
+              pogled: stanje.pogled,
+              spremljen: citajSpremljenSort(citaj(KLJUC.sort, null)),
+            }),
+            p.viseRijeci,
+          ),
         )
         setPrikazano(PO_STRANICI)
         naPonudu()
@@ -362,14 +373,16 @@ export function usePonuda(p: Pripremljeno) {
       prihvatiUvoz() {
         if (!uvoz) return
         const { tude, plan } = uvoz
-        setOznake((o) => uvezi(o, tude, plan.nove))
+        // Marks set while the banner was open win over the shared ones.
+        const nove = plan.nove.filter((id) => !oznake[id])
+        setOznake((o) => uvezi(o, tude, nove))
         const t = Date.now()
         setVidjeno((v) => ({
           ...v,
-          ...Object.fromEntries(plan.nove.map((id) => [id, v[id] || t])),
+          ...Object.fromEntries(nove.map((id) => [id, v[id] || t])),
         }))
         setUvoz(null)
-        toast.success(`Dodano ${plan.nove.length} oznaka`)
+        toast.success(`Dodano ${nove.length} oznaka`)
         promijeni((s) => ({ ...s, pogled: 'favoriti' }))
         naPonudu()
       },
@@ -382,8 +395,11 @@ export function usePonuda(p: Pripremljeno) {
       zatvori,
     }),
     [
+      p,
       promijeni,
       postavi,
+      jeUpit,
+      oznake,
       stanje,
       zelje,
       pretrage,
