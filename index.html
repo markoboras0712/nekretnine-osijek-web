@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nekretnine Osijek i okolica</title>
+<meta name="description" content="Svi oglasi za stanove, kuće i zemljišta u Osijeku i okolici na jednom mjestu: portali, agencije, natječaji i dražbe.">
+<meta name="theme-color" content="#1f6f5c">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M4 15 16 5l12 10v12H19v-8h-6v8H4z' fill='%231f6f5c'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="stil.css">
+</head>
+<body>
+<section class="hero" aria-labelledby="naslov">
+  <div class="hero-pozadina" aria-hidden="true">
+    <svg viewBox="0 0 1200 260" preserveAspectRatio="xMidYMax slice">
+      <path d="M0 260V196l60-36 60 36v-28l44-30 44 30v58l70-52 70 52v-40l50-34 50 34v-22l80-58 80 58v46l46-32 46 32v-30l66-46 66 46v14l54-38 54 38v-48l70-50 70 50v30l40-28 40 28v66z"/>
+    </svg>
+  </div>
+  <div class="hero-sadrzaj">
+    <p class="hero-kicker">Osijek · Antunovac · Bilje · Čepin · Petrijevci · Valpovo</p>
+    <h1 id="naslov">Svaka nekretnina na prodaju u Osijeku i okolici. Na jednom mjestu.</h1>
+    <p class="hero-opis">Portali, lokalne agencije, javni natječaji i dražbe, skupljeni, očišćeni od duplikata i
+      uspoređeni s prosječnom cijenom mjesta. Osvježava se svakih sat vremena.</p>
+    <div class="hero-brojke" id="hero-brojke" aria-live="polite">
+      <div><b id="hb-nek">–</b><span>nekretnina</span></div>
+      <div><b id="hb-izv">–</b><span>izvora</span></div>
+      <div><b id="hb-osv">–</b><span>osvježeno</span></div>
+    </div>
+    <div class="hero-gumbi">
+      <a class="gumb svijetli" href="#ponuda">Pogledaj ponudu</a>
+      <a class="gumb obrub" href="o-alatu.html">Kako radi</a>
+    </div>
+  </div>
+</section>
+
+<header class="vrh" id="ponuda">
+  <div class="vrh-red">
+    <div class="trazilica" role="search">
+      <svg class="trazilica-ikona" viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><path d="m13 13 4.5 4.5"/></svg>
+      <input id="f-trazi" type="search" autocomplete="off" spellcheck="false" enterkeyhint="search"
+        placeholder="Traži: Retfala, garaža, trosoban, novogradnja…" aria-label="Traži nekretnine"
+        role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="prijedlozi">
+      <ul id="prijedlozi" class="prijedlozi" role="listbox" aria-label="Prijedlozi" hidden></ul>
+    </div>
+    <button id="gumb-filteri" class="gumb sekundarni gumb-filteri" aria-expanded="false" aria-controls="filteri">Filteri</button>
+  </div>
+  <nav class="pogledi" id="pogledi" aria-label="Prikaz"></nav>
+</header>
+
+<section id="filteri" class="filteri" hidden aria-label="Filteri">
+  <div class="filteri-mreza">
+    <div class="polje"><span class="oznaka">Vrsta</span><div class="cipovi" id="f-vrsta"></div></div>
+    <div class="polje"><span class="oznaka">Općina</span><div class="cipovi" id="f-opcina"></div></div>
+    <div class="polje siroko"><span class="oznaka">Kvart / naselje</span><div class="cipovi" id="f-mjesto"></div></div>
+    <div class="polje siroko">
+      <span class="oznaka">Cijena</span>
+      <div class="cipovi" id="f-cijena-brzo"></div>
+      <div class="red2 uski">
+        <label class="polje"><span class="vidljivo-sr">Cijena od €</span><input id="f-cmin" type="number" inputmode="numeric" placeholder="od €" step="10000" min="0"></label>
+        <label class="polje"><span class="vidljivo-sr">Cijena do €</span><input id="f-cmax" type="number" inputmode="numeric" placeholder="do €" step="10000" min="0"></label>
+      </div>
+    </div>
+    <div class="polje" id="p-sobe"><span class="oznaka">Broj soba <small>(stanovi i kuće gdje piše)</small></span><div class="cipovi" id="f-sobe"></div></div>
+    <div class="polje" id="p-kat"><span class="oznaka">Kat <small>(stanovi)</small></span><div class="cipovi" id="f-kat"></div></div>
+    <div class="polje siroko"><span class="oznaka">Ima <small>(iz opisa oglasa)</small></span><div class="cipovi" id="f-zn"></div></div>
+    <div class="polje siroko"><span class="oznaka">Brzo</span><div class="cipovi" id="f-brzo"></div></div>
+    <div class="polje siroko">
+      <span class="oznaka">Površina i cijena po m²</span>
+      <div class="red4">
+        <label class="polje"><span class="oznaka">Površina od m²</span><input id="f-pmin" type="number" inputmode="numeric" placeholder="bilo koja" step="10" min="0"></label>
+        <label class="polje"><span class="oznaka">Površina do m²</span><input id="f-pmax" type="number" inputmode="numeric" placeholder="bilo koja" step="10" min="0"></label>
+        <label class="polje"><span class="oznaka">Zemljište od m²</span><input id="f-zmin" type="number" inputmode="numeric" placeholder="bilo koje" step="100" min="0"></label>
+        <label class="polje"><span class="oznaka">€/m² do</span><input id="f-m2max" type="number" inputmode="numeric" placeholder="bilo koja" step="100" min="0"></label>
+      </div>
+    </div>
+    <div class="polje siroko zelje-blok">
+      <span class="oznaka">Što ti je važno? <small>Klik = važno ★, dva klika = jako važno ★★. Sortira se „Po mojim željama”,
+        a spremljeno je samo u ovom pregledniku, pa svatko može imati svoje.</small></span>
+      <div class="cipovi" id="f-zelje"></div>
+      <span class="oznaka">Izbjegavam</span>
+      <div class="cipovi" id="f-izbjegavam"></div>
+      <button id="f-zelje-ocisti" class="ocisti-sve lijevo" type="button" hidden>Poništi želje</button>
+    </div>
+    <div class="polje siroko">
+      <span class="oznaka">Spremljene pretrage <small>(samo u ovom pregledniku)</small></span>
+      <form id="f-spremi" class="spremi">
+        <input id="f-naziv" type="text" maxlength="40" placeholder="npr. Stan za nas" aria-label="Naziv pretrage">
+        <button class="gumb" type="submit">Spremi ovu pretragu</button>
+      </form>
+    </div>
+    <div class="red2 siroko">
+      <button id="f-ocisti" class="gumb sekundarni" type="button">Očisti sve filtere</button>
+      <button id="f-podijeli" class="gumb sekundarni" type="button">Kopiraj link s filterima</button>
+    </div>
+  </div>
+  <div class="filteri-dno"><button id="f-prikazi" class="gumb" type="button">Prikaži rezultate</button></div>
+</section>
+
+<main>
+  <div id="spremljene" class="spremljene" hidden></div>
+  <div id="uvoz-oznaka" class="rokovi-obavijest uvoz-oznaka" role="status" hidden></div>
+  <div id="rokovi-obavijest" class="rokovi-obavijest" role="status" hidden></div>
+  <div class="sort-traka">
+    <div class="sort-red1">
+      <p id="sazetak" class="sazetak" aria-live="polite">Učitavam…</p>
+      <div class="prikaz" id="prikaz" role="group" aria-label="Prikaz">
+        <button type="button" data-prikaz="popis" aria-pressed="true">Popis</button>
+        <button type="button" data-prikaz="karta" aria-pressed="false">Karta</button>
+      </div>
+    </div>
+    <div class="sort-kontrole">
+      <label class="sort-izbor">
+        <span class="vidljivo-sr">Sortiraj</span>
+        <span class="sort-natpis" aria-hidden="true">Sortiraj:</span>
+        <select id="f-sort">
+          <option value="relevantno">Najrelevantnije</option>
+          <option value="moje">Po mojim željama</option>
+          <option value="ocjena">Najbolja ponuda</option>
+          <option value="datum">Datum objave</option>
+          <option value="cijena">Cijena</option>
+          <option value="m2">Cijena po m²</option>
+          <option value="prosjek">Odnos prema prosjeku</option>
+          <option value="povrsina">Površina</option>
+          <option value="zemljiste">Okućnica / zemljište</option>
+          <option value="sobe">Broj soba</option>
+          <option value="pad">Pad cijene (30 dana)</option>
+          <option value="izvori">Broj izvora</option>
+        </select>
+      </label>
+      <button id="f-smjer" class="sort-smjer" type="button"></button>
+    </div>
+  </div>
+  <div id="aktivni" class="aktivni" hidden></div>
+  <div id="karta-blok" class="karta-blok" hidden>
+    <div id="karta" class="karta" role="region" aria-label="Karta nekretnina po kvartovima i naseljima"></div>
+    <p id="karta-poruka" class="karta-poruka" hidden></p>
+    <p class="karta-napomena">Krug je kvart ili naselje, a broj u njemu koliko nekretnina iz trenutnog popisa ondje ima.
+      Oglasi rijetko navode adresu, pa točna lokacija nije poznata. Klikni krug za prosječne cijene i popis.</p>
+  </div>
+  <div id="popis" class="popis"></div>
+  <button id="jos" class="gumb sekundarni jos" hidden>Prikaži još</button>
+</main>
+
+<div id="usporedba-traka" class="usporedba-traka" hidden></div>
+<dialog id="usporedba" class="detalj usporedba" aria-label="Usporedba nekretnina">
+  <div id="usporedba-sadrzaj"></div>
+</dialog>
+<dialog id="detalj" class="detalj" aria-label="Detalji nekretnine">
+  <div id="detalj-sadrzaj"></div>
+</dialog>
+
+<footer class="dno">
+  <p id="stanje"></p>
+  <p>Podaci se skupljaju s javnih oglasa (portali, agencije, natječaji, dražbe) i mogu sadržavati greške.
+    Uvijek provjeri izvorni oglas. Oznake (favorit, odbačeno) spremaju se samo u tvom pregledniku,
+    a s drugom osobom ih dijeliš linkom <a href="#" id="podijeli-oznake">Podijeli moje oznake</a>.
+    <a href="o-alatu.html">Kako radi i odakle su podaci</a></p>
+</footer>
+<script src="app.js"></script>
+</body>
+</html>
