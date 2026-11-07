@@ -1,6 +1,7 @@
 'use client'
 
 import { ArrowDownIcon, ArrowUpIcon, SlidersHorizontalIcon, XIcon } from 'lucide-react'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useState } from 'react'
 import { Cip } from '@/components/Cip'
@@ -28,7 +29,7 @@ import {
 import { SIROKO, useMediaQuery } from '@/hooks/use-media-query'
 import { usePodaci } from '@/hooks/use-podaci'
 import { usePonuda, type Ponuda as PonudaStanje } from '@/hooks/use-ponuda'
-import { linkNekretnine, linkStranice, podijeli, preuzmi } from '@/lib/browser'
+import { linkNekretnine, linkStranice, naPonudu, podijeli, preuzmi } from '@/lib/browser'
 import { POGLEDI } from '@/lib/constants'
 import { brojIzvoraUkupno, type Pripremljeno } from '@/lib/data'
 import { ics } from '@/lib/deadlines'
@@ -36,6 +37,43 @@ import { prije } from '@/lib/format'
 import { kodOznaka, sazetakUvoza } from '@/lib/marks'
 import { REDOSLIJED_SORTA, SORTOVI, tekstSmjera, type SortKey } from '@/lib/sort'
 import { cn } from '@/lib/utils'
+
+// Leaflet touches window on import, and most visits never open the map.
+const Karta = dynamic(() => import('@/components/Karta').then((m) => m.Karta), {
+  ssr: false,
+  loading: () => (
+    <div className="grid h-[min(70vh,620px)] min-h-90 place-items-center rounded-2xl border text-sm text-muted-foreground">
+      Učitavam kartu…
+    </div>
+  ),
+})
+
+function PrikazPrekidac({ x }: { x: PonudaStanje }) {
+  return (
+    <div
+      role="group"
+      aria-label="Prikaz"
+      className="inline-flex overflow-hidden rounded-full border bg-card"
+    >
+      {(
+        [
+          ['popis', 'Popis'],
+          ['karta', 'Karta'],
+        ] as const
+      ).map(([k, t]) => (
+        <button
+          key={k}
+          type="button"
+          aria-pressed={x.stanje.prikaz === k}
+          onClick={() => x.akcije.promijeni((s) => ({ ...s, prikaz: k }))}
+          className="min-h-9 px-3.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50 aria-pressed:bg-primary aria-pressed:font-semibold aria-pressed:text-primary-foreground"
+        >
+          {t}
+        </button>
+      ))}
+    </div>
+  )
+}
 
 function Pogledi({ x }: { x: PonudaStanje }) {
   return (
@@ -307,6 +345,7 @@ function Sadrzaj({ p }: { p: Pripremljeno }) {
   const [filteriOtvoreni, setFilteriOtvoreni] = useState(() => window.matchMedia(SIROKO).matches)
   const brojFiltera = aktivni.filter((a) => !a.pretraga).length
   const prikazi = lista.slice(0, prikazano)
+  const naKarti = stanje.prikaz === 'karta'
 
   return (
     <>
@@ -367,11 +406,30 @@ function Sadrzaj({ p }: { p: Pripremljeno }) {
         <Spremljene x={x} />
         <Obavijesti x={x} />
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <Sazetak x={x} />
+          <div className="flex flex-wrap items-center gap-3">
+            <Sazetak x={x} />
+            <PrikazPrekidac x={x} />
+          </div>
           {stanje.pogled !== 'rokovi' && <SortKontrole x={x} />}
         </div>
         <Aktivni x={x} />
-        {lista.length ? (
+        {naKarti && lista.length > 0 ? (
+          <div className="grid gap-2">
+            <Karta
+              lista={lista}
+              mjesta={stanje.mjesta}
+              odaberi={(naziv) => {
+                akcije.promijeni((s) => ({ ...s, mjesta: [naziv], prikaz: 'popis' }))
+                naPonudu()
+              }}
+            />
+            <p className="text-xs text-muted-foreground">
+              Krug je kvart ili naselje, a broj u njemu koliko nekretnina iz trenutnog popisa ondje
+              ima. Oglasi rijetko navode adresu, pa točna lokacija nije poznata. Klikni krug za
+              prosječne cijene i popis.
+            </p>
+          </div>
+        ) : lista.length ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {prikazi.map((n) => (
               <Kartica key={n.id} n={n} x={x} />
@@ -391,7 +449,7 @@ function Sadrzaj({ p }: { p: Pripremljeno }) {
             )}
           </div>
         )}
-        {lista.length > prikazano && (
+        {!naKarti && lista.length > prikazano && (
           <Button
             variant="outline"
             className="h-11 justify-self-center px-6"

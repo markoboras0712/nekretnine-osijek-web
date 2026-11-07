@@ -1,0 +1,66 @@
+name: Deploy
+
+# Builds the static site and publishes it to GitHub Pages.
+#
+# Code changes deploy on every push to main. Data changes come from the backend (objava.py),
+# which force-pushes podaci.json to the `podaci` branch and then sends a `podaci`
+# repository_dispatch. A push to `podaci` cannot trigger this file itself: GitHub reads workflows
+# from the pushed commit, and that branch holds only podaci.json. repository_dispatch runs the
+# workflow from the default branch, which must be main.
+on:
+  push:
+    branches: [main]
+  repository_dispatch:
+    types: [podaci]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time; a newer one waits instead of cancelling a deploy half-way.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.pages.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Fetch the latest data
+        run: |
+          set -euo pipefail
+          git fetch --depth=1 origin podaci
+          git show origin/podaci:podaci.json > public/podaci.json
+          echo "podaci.json: $(wc -c < public/podaci.json) bytes"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test
+      - run: pnpm build
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: out
+
+      - id: pages
+        uses: actions/deploy-pages@v4

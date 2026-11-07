@@ -116,3 +116,38 @@
     scroll-behavior: auto;
   }
 }
+
+/* ---------- map (Leaflet) ---------- */
+.karta {
+  z-index: 0;
+  background: var(--muted);
+}
+.mjehur-omot {
+  background: none;
+  border: none;
+}
+.mjehur {
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgb(31 111 92 / 0.82);
+  color: #fff;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.3);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.mjehur.oznacen {
+  background: #b5541f;
+}
+.mjehur.nepoznat {
+  background: rgb(95 107 102 / 0.8);
+}
+.karta .leaflet-popup-content-wrapper,
+.karta .leaflet-popup-tip {
+  background: var(--popover);
+  color: var(--popover-foreground);
+}
+.dark .karta .leaflet-tile-pane {
+  filter: brightness(0.75) invert(1) contrast(0.9) hue-rotate(180deg) saturate(0.6);
+}
