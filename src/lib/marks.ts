@@ -5,7 +5,7 @@ import { OZNAKE, type Oznaka } from '@/lib/constants'
 export type Oznake = Record<string, Oznaka>
 
 export function jeOznaka(v: unknown): v is Oznaka {
-  return typeof v === 'string' && v in OZNAKE
+  return typeof v === 'string' && Object.hasOwn(OZNAKE, v)
 }
 
 /** Clicking the current mark (or none) clears it; any other mark replaces it. */
@@ -25,8 +25,8 @@ const KRATICE: Record<Oznaka, string> = {
 export function kodOznaka(oznake: Oznake): string {
   const po = new Map<string, string[]>()
   for (const [id, o] of Object.entries(oznake)) {
+    if (!jeOznaka(o)) continue
     const k = KRATICE[o]
-    if (!k) continue
     po.set(k, [...(po.get(k) ?? []), id])
   }
   return [...po].map(([k, ids]) => k + '.' + ids.join('.')).join('~')
@@ -34,14 +34,12 @@ export function kodOznaka(oznake: Oznake): string {
 
 /** Inverse of kodOznaka; ids that do not look like ids are dropped. */
 export function dekodOznaka(kod: string): Oznake {
-  const obrnuto = Object.fromEntries(Object.entries(KRATICE).map(([o, k]) => [k, o])) as Record<
-    string,
-    Oznaka
-  >
+  // A Map, not an object: codes come from links other people send ("constructor", "__proto__").
+  const obrnuto = new Map(Object.entries(KRATICE).map(([o, k]) => [k, o as Oznaka]))
   const van: Oznake = {}
   for (const dio of String(kod || '').split('~')) {
     const [k, ...ids] = dio.split('.')
-    const o = k ? obrnuto[k] : undefined
+    const o = k ? obrnuto.get(k) : undefined
     if (!o) continue
     for (const id of ids) if (/^[\w-]{1,20}$/.test(id)) van[id] = o
   }
@@ -77,11 +75,12 @@ export function sazetakUvoza(tude: Oznake, nove: readonly string[]): string {
   return [...po].map(([o, b]) => `${OZNAKE[o].toLowerCase()} ${b}`).join(', ')
 }
 
+/** Adds the shared marks for `nove`, skipping any id I marked meanwhile (mine always win). */
 export function uvezi(moje: Oznake, tude: Oznake, nove: readonly string[]): Oznake {
   const van = { ...moje }
   for (const id of nove) {
     const o = tude[id]
-    if (o) van[id] = o
+    if (o && !van[id]) van[id] = o
   }
   return van
 }

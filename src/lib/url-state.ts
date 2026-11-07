@@ -40,7 +40,10 @@ export function uQuery(st: Stanje): string {
 
 /** The stored nek_sort value: [sort, smjer], or a legacy plain string. */
 export function citajSpremljenSort(v: unknown): SortPar | null {
-  if (typeof v === 'string') return [jeSort(v) ? v : 'ocjena', 0]
+  if (typeof v === 'string') {
+    if (Object.hasOwn(STARI_SORT, v)) return STARI_SORT[v] as SortPar
+    return [jeSort(v) ? v : 'ocjena', 0]
+  }
   if (Array.isArray(v) && jeSort(v[0])) return [v[0], typeof v[1] === 'number' ? v[1] : 0]
   return null
 }
@@ -83,8 +86,7 @@ export function izQuery(
   let sort: string = urlSort || spremljen?.[0] || 'ocjena'
   const sm = p.get('smjer')
   let smjer = sm === 'gore' ? 1 : sm === 'dolje' ? -1 : !urlSort && spremljen ? spremljen[1] : 0
-  const stari = STARI_SORT[sort]
-  if (stari) [sort, smjer] = stari
+  if (Object.hasOwn(STARI_SORT, sort)) [sort, smjer] = STARI_SORT[sort] as SortPar
   st.sort = jeSort(sort) && sort !== 'relevantno' ? sort : 'ocjena'
   st.smjer = smjer
   st.prikaz = p.get('prikaz') === 'karta' ? 'karta' : 'popis'
@@ -110,22 +112,24 @@ export function bezPogleda(q: string): string {
 
 /**
  * Sets the search text. Starting a search switches to "Najrelevantnije" and remembers the
- * previous sort; clearing it restores that sort.
+ * previous sort; clearing it restores that sort. `jeUpit` tells whether a query has anything to
+ * search for (one letter alone does not), so "Najrelevantnije" is never shown without results.
  */
 export function postaviTrazi(
   st: Stanje,
   prije: SortPar | null,
   trazi: string,
+  jeUpit: (q: string) => boolean = (q) => !!q.trim(),
 ): { stanje: Stanje; sortPrijeTrazenja: SortPar | null } {
   const t = trazi.trim()
-  // Only the first keystroke switches the sort, so a sort picked while searching sticks.
-  if (t && !st.trazi && st.sort !== 'relevantno') {
+  if (!jeUpit(t)) return vratiSort({ ...st, trazi: t }, prije)
+  // Only the start of a search switches the sort, so a sort picked while searching sticks.
+  if (!jeUpit(st.trazi) && st.sort !== 'relevantno') {
     return {
       stanje: { ...st, trazi: t, sort: 'relevantno', smjer: 0 },
       sortPrijeTrazenja: [st.sort, st.smjer],
     }
   }
-  if (!t) return vratiSort({ ...st, trazi: '' }, prije)
   return { stanje: { ...st, trazi: t }, sortPrijeTrazenja: prije }
 }
 

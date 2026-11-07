@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { prazno } from '@/lib/filters'
 import {
   bezPogleda,
+  citajSpremljenSort,
   izQuery,
   ocistiSve,
   postaviTrazi,
@@ -36,6 +37,18 @@ describe('url state', () => {
     expect(izQuery('sort=najdulje').stanje.smjer).toBe(1)
   })
 
+  it('maps a legacy stored sort string', () => {
+    expect(citajSpremljenSort('cijena_up')).toEqual(['cijena', 1])
+    expect(citajSpremljenSort('novo')).toEqual(['datum', -1])
+    expect(citajSpremljenSort('m2')).toEqual(['m2', 0])
+    expect(citajSpremljenSort('constructor')).toEqual(['ocjena', 0])
+  })
+
+  it('ignores sort names that are object properties', () => {
+    expect(izQuery('sort=constructor').stanje.sort).toBe('ocjena')
+    expect(izQuery('sort=toString').stanje.sort).toBe('ocjena')
+  })
+
   it('uses the stored sort when the URL has none', () => {
     expect(izQuery('', { spremljen: ['m2', -1] }).stanje).toMatchObject({ sort: 'm2', smjer: -1 })
     expect(izQuery('sort=datum', { spremljen: ['m2', -1] }).stanje).toMatchObject({
@@ -52,6 +65,17 @@ describe('url state', () => {
     expect(sortPrijeTrazenja).toEqual(['cijena', 1])
     const r = postaviTrazi(stanje, sortPrijeTrazenja, '')
     expect(r.stanje).toMatchObject({ trazi: '', sort: 'cijena', smjer: 1 })
+  })
+
+  it('waits for a usable query before sorting by relevance', () => {
+    const jeUpit = (q: string) => q.trim().length >= 2
+    const a = postaviTrazi({ ...prazno(), sort: 'm2' }, null, 'r', jeUpit)
+    expect(a.stanje).toMatchObject({ trazi: 'r', sort: 'm2' })
+    const b = postaviTrazi(a.stanje, a.sortPrijeTrazenja, 're', jeUpit)
+    expect(b.stanje.sort).toBe('relevantno')
+    expect(b.sortPrijeTrazenja).toEqual(['m2', 0])
+    const c = postaviTrazi(b.stanje, b.sortPrijeTrazenja, 'r', jeUpit)
+    expect(c.stanje).toMatchObject({ trazi: 'r', sort: 'm2' })
   })
 
   it('switches to relevance on the first keystroke only', () => {

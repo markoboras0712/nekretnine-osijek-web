@@ -22,6 +22,7 @@ export function Trazilica({ x }: { x: Ponuda }) {
   const [otvoreno, setOtvoreno] = useState(false)
   const [aktivni, setAktivni] = useState(-1)
   const input = useRef<HTMLInputElement>(null)
+  const zatvaranje = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const id = useId()
 
   const prijedlozi = useMemo(
@@ -73,8 +74,13 @@ export function Trazilica({ x }: { x: Ponuda }) {
           setAktivni(-1)
           akcije.postaviTrazi(e.target.value)
         }}
-        onFocus={() => setOtvoreno(true)}
-        onBlur={() => setTimeout(() => setOtvoreno(false), 150)}
+        onFocus={() => {
+          clearTimeout(zatvaranje.current)
+          setOtvoreno(true)
+        }}
+        onBlur={() => {
+          zatvaranje.current = setTimeout(() => setOtvoreno(false), 150)
+        }}
         onKeyDown={(e) => {
           if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
             if (!pokazi) return
