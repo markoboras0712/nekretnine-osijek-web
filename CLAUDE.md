@@ -210,8 +210,10 @@ marks where the user has none (never overwrites).
    test → `next build` (export to `out/`) → `actions/upload-pages-artifact` → `actions/deploy-pages`.
    Permissions `pages: write, id-token: write, contents: read`; concurrency group `pages`.
    Also a CI workflow like zoetrope's.
-4. Cutover: repo Settings → default branch = **`main`**, Settings → Pages → Source = **GitHub Actions**;
-   deploy objava change; check the site,
+4. Cutover: the `podaci` branch must exist before the first deploy (seed it with the current
+   `podaci.json`). Repo Settings → default branch = **`main`**; Settings → Environments → `github-pages`
+   → allow `main` in its deployment branches (it only allows `gh-pages` from the legacy setup);
+   Settings → Pages → Source = **GitHub Actions**; deploy objava change; check the site,
    `#n=<id>` links, and that hourly data pushes redeploy. Then the `gh-pages` branch can be deleted.
 5. Local dev: copy the current `podaci.json` into `public/` (gitignored) and `pnpm dev`.
 

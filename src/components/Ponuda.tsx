@@ -3,7 +3,7 @@
 import { ArrowDownIcon, ArrowUpIcon, SlidersHorizontalIcon, XIcon } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { toast } from 'sonner'
 import { Cip } from '@/components/Cip'
 import { Detalj } from '@/components/Detalj'
@@ -43,7 +43,7 @@ import { cn } from '@/lib/utils'
 const Karta = dynamic(() => import('@/components/Karta').then((m) => m.Karta), {
   ssr: false,
   loading: () => (
-    <div className="grid h-[min(70vh,620px)] min-h-90 place-items-center rounded-2xl border text-sm text-muted-foreground">
+    <div className="grid h-[62vh] min-h-80 place-items-center sm:h-[min(70vh,620px)] sm:min-h-90 rounded-2xl border text-sm text-muted-foreground">
       Učitavam kartu…
     </div>
   ),
@@ -53,7 +53,7 @@ function PrikazPrekidac({ x }: { x: PonudaStanje }) {
   return (
     <div
       role="group"
-      aria-label="Prikaz"
+      aria-label="Popis ili karta"
       className="inline-flex overflow-hidden rounded-full border bg-card"
     >
       {(
@@ -350,6 +350,13 @@ function Sadrzaj({ p }: { p: Pripremljeno }) {
   const brojFiltera = aktivni.filter((a) => !a.pretraga).length
   const prikazi = lista.slice(0, prikazano)
   const naKarti = stanje.prikaz === 'karta'
+  const odaberiMjesto = useCallback(
+    (naziv: string) => {
+      akcije.promijeni((s) => ({ ...s, mjesta: [naziv], prikaz: 'popis' }))
+      naPonudu()
+    },
+    [akcije],
+  )
 
   return (
     <>
@@ -419,14 +426,7 @@ function Sadrzaj({ p }: { p: Pripremljeno }) {
         <Aktivni x={x} />
         {naKarti && lista.length > 0 ? (
           <div className="grid gap-2">
-            <Karta
-              lista={lista}
-              mjesta={stanje.mjesta}
-              odaberi={(naziv) => {
-                akcije.promijeni((s) => ({ ...s, mjesta: [naziv], prikaz: 'popis' }))
-                naPonudu()
-              }}
-            />
+            <Karta lista={lista} mjesta={stanje.mjesta} odaberi={odaberiMjesto} />
             <p className="text-xs text-muted-foreground">
               Krug je kvart ili naselje, a broj u njemu koliko nekretnina iz trenutnog popisa ondje
               ima. Oglasi rijetko navode adresu, pa točna lokacija nije poznata. Klikni krug za

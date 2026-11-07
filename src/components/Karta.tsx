@@ -53,28 +53,36 @@ function Krugovi({ lista, mjesta, odaberi }: Props) {
         .join(),
     [sk],
   )
+  // New icon objects make react-leaflet swap the marker element, so build them only when the
+  // circles change, not on every re-render of the page.
+  const ikone = useMemo(() => kr.map((k) => ikona(k, max, zoom)), [kr, max, zoom])
+  const uGrad = useMemo(
+    () => ({ click: () => map.setView(KOORD.Osijek as [number, number], 13.5) }),
+    [map],
+  )
 
   return (
     <>
       <Prilagodi granice={granice} otisak={otisak} />
-      {kr.map((k) => {
+      {kr.map((k, i) => {
         // smaller circles above larger ones, so all can be clicked
         const z = Math.round(1000 * (1 - k.broj / max))
+        // Leaflet reads `title` only when the marker is created, so the count is part of the key.
         return k.grad ? (
           <Marker
-            key="__grad"
+            key={`__grad:${k.broj}`}
             position={k.k}
-            icon={ikona(k, max, zoom)}
+            icon={ikone[i]}
             title={`Osijek (grad): ${k.broj} — klikni za kvartove`}
             zIndexOffset={z}
             riseOnHover
-            eventHandlers={{ click: () => map.setView(KOORD.Osijek as [number, number], 13.5) }}
+            eventHandlers={uGrad}
           />
         ) : (
           <Marker
-            key={k.naziv}
+            key={`${k.naziv}:${k.broj}`}
             position={k.k}
-            icon={ikona(k, max, zoom)}
+            icon={ikone[i]}
             title={`${k.naziv}: ${k.broj}`}
             zIndexOffset={z}
             riseOnHover
@@ -115,7 +123,7 @@ export function Karta(props: Props) {
         zoom={11}
         zoomSnap={0.5}
         scrollWheelZoom={false}
-        className="karta h-[min(70vh,620px)] min-h-90 rounded-2xl border"
+        className="karta h-[62vh] min-h-80 rounded-2xl border sm:h-[min(70vh,620px)] sm:min-h-90"
       >
         <TileLayer
           url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"

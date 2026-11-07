@@ -38,8 +38,11 @@ jobs:
       - name: Fetch the latest data
         run: |
           set -euo pipefail
-          git fetch --depth=1 origin podaci
-          git show origin/podaci:podaci.json > public/podaci.json
+          if ! git fetch --depth=1 origin podaci; then
+            echo "::error::Branch 'podaci' not found. Push podaci.json to it first (the backend's objava.py does this every hour)."
+            exit 1
+          fi
+          git show FETCH_HEAD:podaci.json > public/podaci.json
           echo "podaci.json: $(wc -c < public/podaci.json) bytes"
 
       - name: Install pnpm

@@ -16,7 +16,7 @@ function useSada(): number | null {
 }
 
 /** "svakih 15 min", "svakih 2 h", "dvaput dnevno", "jednom dnevno". */
-export function ritam(m: number | null): string {
+function ritam(m: number | null): string {
   if (!m) return ''
   if (m < 60) return `svakih ${m} min`
   if (m < 1440) {
