@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { prazno } from '@/lib/filters'
-import { bezPogleda, izQuery, ocistiSve, postaviTrazi, uQuery } from '@/lib/url-state'
+import {
+  bezPogleda,
+  izQuery,
+  ocistiSve,
+  postaviTrazi,
+  primijeniOdabir,
+  uQuery,
+} from '@/lib/url-state'
 
 describe('url state', () => {
   it('round-trips filters', () => {
@@ -71,5 +78,19 @@ describe('url state', () => {
 
   it('ignores unknown views', () => {
     expect(izQuery('p=hack').stanje.pogled).toBe('sve')
+  })
+})
+
+describe('choosing a suggestion', () => {
+  it('turns a place into a filter and restores the sort when no text is left', () => {
+    const st = { ...prazno(), trazi: 'retf', sort: 'relevantno' as const }
+    const r = primijeniOdabir(st, ['cijena', 0], { tip: 'mjesto', v: 'Retfala' }, '')
+    expect(r.stanje).toMatchObject({ trazi: '', mjesta: ['Retfala'], sort: 'cijena' })
+  })
+
+  it('keeps searching by relevance when text is left', () => {
+    const r = primijeniOdabir({ ...prazno(), sort: 'm2' }, null, { tip: 'tekst', v: 'X' }, '"X"')
+    expect(r.stanje.sort).toBe('relevantno')
+    expect(r.sortPrijeTrazenja).toEqual(['m2', 0])
   })
 })

@@ -144,3 +144,8 @@ export async function ucitajPodatke(now = Date.now()): Promise<Ucitavanje> {
     return { ok: false, greska: 'mreža nije dostupna' }
   }
 }
+
+/** Sources tracked, as on the about page (falls back to the flat list). */
+export function brojIzvoraUkupno(p: Pick<Podaci, 'skupine_izvora' | 'izvori'>): number {
+  return p.skupine_izvora.reduce((a, g) => a + g.izvori.length, 0) || p.izvori.length
+}

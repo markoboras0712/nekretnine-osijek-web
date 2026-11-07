@@ -145,3 +145,28 @@ export function ocistiSve(st: Stanje, prije: SortPar | null): Stanje {
     st.sort === 'relevantno' ? (prije ?? ['ocjena', 0]) : [st.sort, st.smjer]
   return { ...prazno(), pogled: st.pogled, sort, smjer }
 }
+
+export type Odabir = { tip: 'mjesto' | 'opcina' | 'zn' | 'vrsta' | 'sobe' | 'tekst'; v: string }
+
+/**
+ * Choosing a suggestion: a place, općina, feature, rooms or type becomes a filter (more precise
+ * than text search); an agency goes into the query as a phrase. `trazi` is the query left over.
+ */
+export function primijeniOdabir(
+  st: Stanje,
+  prije: SortPar | null,
+  p: Odabir,
+  trazi: string,
+): IzUrla {
+  const s: Stanje = { ...st, trazi }
+  if (p.tip === 'mjesto') s.mjesta = [...s.mjesta, p.v]
+  if (p.tip === 'opcina') s.opcine = [...s.opcine, p.v]
+  if (p.tip === 'zn') s.zn = [...s.zn, p.v]
+  if (p.tip === 'sobe') s.sobe = [...s.sobe, p.v]
+  if (p.tip === 'vrsta') s.vrste = [p.v]
+  if (!trazi) return vratiSort(s, prije)
+  if (s.sort !== 'relevantno') {
+    return { stanje: { ...s, sort: 'relevantno', smjer: 0 }, sortPrijeTrazenja: [s.sort, s.smjer] }
+  }
+  return { stanje: s, sortPrijeTrazenja: prije }
+}

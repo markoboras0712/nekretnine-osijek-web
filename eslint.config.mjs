@@ -13,7 +13,10 @@ export default defineConfig([
     rules: {
       // App Router only; there is no pages/ directory.
       '@next/next/no-html-link-for-pages': 'off',
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', ignoreRestSiblings: true },
+      ],
       // Listing photos come from many third-party hosts and the site is a static export
       // (images.unoptimized), so next/image adds nothing.
       '@next/next/no-img-element': 'off',
