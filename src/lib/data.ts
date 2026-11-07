@@ -67,12 +67,13 @@ export function pripremi(d: Podaci): Pripremljeno {
   return {
     ...d,
     znacajke,
+    podrucje: d.podrucje || {},
     skupine_izvora: d.skupine_izvora || [],
     izvori: d.izvori || [],
     nekretnine,
     poId: new Map(nekretnine.map((n) => [n.id, n])),
     viseRijeci,
-    kandidati: kandidati(nekretnine, d.podrucje, znacajke),
+    kandidati: kandidati(nekretnine, d.podrucje || {}, znacajke),
   }
 }
 

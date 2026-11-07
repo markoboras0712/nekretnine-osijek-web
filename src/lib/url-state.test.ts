@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { prazno } from '@/lib/filters'
-import { bezPogleda, izQuery, ocistiSve, postaviTrazi, uQuery } from '@/lib/url-state'
+import {
+  bezPogleda,
+  citajSpremljenSort,
+  izQuery,
+  ocistiSve,
+  postaviTrazi,
+  uQuery,
+} from '@/lib/url-state'
 
 describe('url state', () => {
   it('round-trips filters', () => {
@@ -27,6 +34,18 @@ describe('url state', () => {
     expect(stanje.brzo).toEqual(['bezag', 'dra'])
     expect([stanje.sort, stanje.smjer]).toEqual(['cijena', -1])
     expect(izQuery('sort=najdulje').stanje.smjer).toBe(1)
+  })
+
+  it('maps a legacy stored sort string', () => {
+    expect(citajSpremljenSort('cijena_up')).toEqual(['cijena', 1])
+    expect(citajSpremljenSort('novo')).toEqual(['datum', -1])
+    expect(citajSpremljenSort('m2')).toEqual(['m2', 0])
+    expect(citajSpremljenSort('constructor')).toEqual(['ocjena', 0])
+  })
+
+  it('ignores sort names that are object properties', () => {
+    expect(izQuery('sort=constructor').stanje.sort).toBe('ocjena')
+    expect(izQuery('sort=toString').stanje.sort).toBe('ocjena')
   })
 
   it('uses the stored sort when the URL has none', () => {

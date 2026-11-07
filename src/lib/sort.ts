@@ -120,7 +120,7 @@ export const REDOSLIJED_SORTA: SortKey[] = [
 ]
 
 export function jeSort(v: unknown): v is SortKey {
-  return typeof v === 'string' && v in SORTOVI
+  return typeof v === 'string' && Object.hasOwn(SORTOVI, v)
 }
 
 export function smjerSorta(sort: SortKey, smjer: number): 1 | -1 {
